@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site management & Daily progress system</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        yellow: {
+                            50: '#fefce8',
+                            100: '#fef9c3',
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                            700: '#a16207',
+                        },
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2pdf Library for Direct PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .shadow-sm, .shadow, .shadow-md, .shadow-lg { box-shadow: none !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="bg-white text-slate-800 h-full flex flex-col">
+
+    <!-- Top Navigation Bar (Clean White, Green & Yellow Theme) -->
+    <header class="bg-white text-slate-900 border-b border-slate-200 shadow-sm z-20 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div>
+                    <h1 id="brand-site-title" class="font-bold text-base sm:text-lg tracking-tight text-slate-900">Site management & Daily progress system</h1>
+                    <p class="text-xs text-emerald-600 font-medium">Enterprise Project Monitoring Dashboard</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button onclick="openWhatsAppModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-brands fa-whatsapp text-base"></i>
+                    <span class="hidden sm:inline">WA Summary</span>
+                </button>
+                <button onclick="exportToPDF()" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span class="hidden sm:inline">Export PDF</span>
+                </button>
+                <div class="relative group">
+                    <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold p-2 rounded-lg transition flex items-center space-x-1 border border-slate-200">
+                        <i class="fa-solid fa-database"></i>
+                        <i class="fa-solid fa-chevron-down text-xs ml-1"></i>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-1 text-slate-700 hidden group-hover:block z-50 text-xs sm:text-sm border border-slate-200">
+                        <button onclick="exportJSON()" class="w-full text-left px-4 py-2 hover:bg-emerald-50 flex items-center space-x-2"><i class="fa-solid fa-download text-emerald-600"></i><span>Backup Data (.json)</span></button>
+                        <label class="w-full text-left px-4 py-2 hover:bg-emerald-50 flex items-center space-x-2 cursor-pointer">
+                            <i class="fa-solid fa-upload text-emerald-600"></i><span>Restore Data</span>
+                            <input type="file" id="importFile" accept=".json" onchange="importJSON(event)" class="hidden">
+                        </label>
+                        <div class="border-t border-slate-100 my-1"></div>
+                        <button onclick="resetDataModal()" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 flex items-center space-x-2"><i class="fa-solid fa-trash-can"></i><span>Reset Data</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container with Tabs -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+        <!-- Navigation Tabs -->
+        <div class="flex space-x-1 bg-slate-100 border border-slate-200 p-1.5 rounded-xl mb-6 overflow-x-auto no-print text-xs sm:text-sm font-medium shadow-sm">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex-1 py-2.5 px-4 rounded-lg transition flex items-center justify-center space-x-2 whitespace-nowrap bg-emerald-600 text-white shadow-sm font-semibold">
+                <i class="fa-solid fa-chart-pie"></i><span>Dashboard Utama</span>
+            </button>
+            <button onclick="switchTab('input')" id="tab-input" class="flex-1 py-2.5 px-4 rounded-lg transition flex items-center justify-center space-x-2 whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white">
+                <i class="fa-solid fa-clipboard-list text-emerald-600"></i><span>Input Laporan & Foto</span>
+            </button>
+            <button onclick="switchTab('items')" id="tab-items" class="flex-1 py-2.5 px-4 rounded-lg transition flex items-center justify-center space-x-2 whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white">
+                <i class="fa-solid fa-list-check text-emerald-600"></i><span>Item Pekerjaan</span>
+            </button>
+            <button onclick="switchTab('issues')" id="tab-issues" class="flex-1 py-2.5 px-4 rounded-lg transition flex items-center justify-center space-x-2 whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white">
+                <i class="fa-solid fa-triangle-exclamation text-emerald-600"></i><span>Log Kendala</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: DASHBOARD UTAMA -->
+        <div id="content-dashboard" class="space-y-6 tab-content">
+            <!-- Project Header Info with Fully Editable Site & Manager -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative border-l-4 border-l-emerald-500">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">Active Site Project</span>
+                        <button onclick="openEditProjectModal()" class="text-xs text-emerald-700 hover:text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 transition flex items-center space-x-1">
+                            <i class="fa-solid fa-pen"></i><span>Edit Nama Site & Manager</span>
+                        </button>
+                    </div>
+                    <h2 id="display-project-name" class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">Proyek Instalasi & Integrasi Data Center</h2>
+                    <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
+                        <i class="fa-solid fa-location-dot text-emerald-600 mr-1"></i> <span id="display-site-location">Main Data Center Site A</span> | Site Manager: <strong id="display-site-manager" class="text-slate-900">Ir. Budi Santoso</strong>
+                    </p>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center space-x-4">
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Status Keseluruhan</p>
+                        <select id="projectStatusSelect" onchange="updateProjectStatus(this.value)" class="mt-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full border border-yellow-300 focus:outline-none cursor-pointer">
+                            <option value="On Progress">On Progress</option>
+                            <option value="On Track">On Track</option>
+                            <option value="Pending Review">Pending Review</option>
+                            <option value="Commissioning">Commissioning</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 border-t-4 border-t-slate-400">
+                    <div class="flex items-center justify-between text-slate-500 mb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Total Target</span>
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600"><i class="fa-solid fa-bullseye"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900" id="kpi-total-target">0</div>
+                    <p class="text-xs text-slate-500 mt-1">akumulasi seluruh item</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 border-t-4 border-t-emerald-500">
+                    <div class="flex items-center justify-between text-slate-500 mb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Total Terpasang</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600"><i class="fa-solid fa-circle-check"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-emerald-600" id="kpi-total-installed">0</div>
+                    <p class="text-xs text-slate-500 mt-1">selesai dikerjakan</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 border-t-4 border-t-yellow-500">
+                    <div class="flex items-center justify-between text-slate-500 mb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Sisa Pengerjaan</span>
+                        <div class="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600"><i class="fa-solid fa-clock"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-yellow-600" id="kpi-total-remaining">0</div>
+                    <p class="text-xs text-slate-500 mt-1">belum terpasang</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 border-t-4 border-t-emerald-600">
+                    <div class="flex items-center justify-between text-slate-500 mb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Tenaga Kerja Hari Ini</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600"><i class="fa-solid fa-users"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900" id="kpi-total-manpower">0 Org</div>
+                    <p class="text-xs text-slate-500 mt-1">teknisi & helper aktif</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 border-t-4 border-t-red-500 sm:col-span-2 lg:col-span-1">
+                    <div class="flex items-center justify-between text-slate-500 mb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Kendala Aktif</span>
+                        <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    </div>
+                    <div class="text-2xl font-bold text-red-600" id="kpi-total-issues">0</div>
+                    <p class="text-xs text-slate-500 mt-1">status open/pending</p>
+                </div>
+            </div>
+
+            <!-- Overall Progress Bar Card -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-900 text-base">Progress Keseluruhan Proyek</h3>
+                    <span id="overall-percentage-text" class="text-lg font-bold text-emerald-800 bg-emerald-100 px-3 py-0.5 rounded-full">0.0%</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden border border-slate-200">
+                    <div id="overall-progress-bar" class="bg-gradient-to-r from-emerald-500 to-yellow-400 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-slate-500 mt-2">
+                    <span>Mulai: 0%</span>
+                    <span>Target: 100% Selesai</span>
+                </div>
+            </div>
+
+            <!-- Grafik / Indikator Status per Item Pekerjaan -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-900 text-base mb-1">Indikator Persentase & Status Bar per Item Pekerjaan</h3>
+                <p class="text-xs text-slate-500 mb-5">Rincian pencapaian aktual terhadap target rencana</p>
+                <div id="item-progress-bars-container" class="space-y-4">
+                    <!-- Dynamic Item Progress Bars -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: INPUT LAPORAN HARIAN -->
+        <div id="content-input" class="space-y-6 tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Input -->
+                <div class="lg:col-span-1 bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-900 text-base mb-4 pb-2 border-b border-slate-100 flex items-center space-x-2">
+                        <i class="fa-solid fa-pen-to-square text-emerald-600"></i>
+                        <span>Form Catat Progress Harian</span>
+                    </h3>
+                    <form id="dailyReportForm" onsubmit="handleDailyReportSubmit(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Tanggal Pengerjaan</label>
+                            <input type="date" id="reportDate" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Zona / Area Lokasi</label>
+                                <button type="button" onclick="openManageZonesModal()" class="text-xs text-emerald-600 hover:underline"><i class="fa-solid fa-gear mr-1"></i>Kelola Zona</button>
+                            </div>
+                            <select id="reportZone" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <!-- Dynamic zones -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">ID Layout (Contoh: ID D02, CAM-01)</label>
+                            <input type="text" id="reportLayoutId" required placeholder="Contoh: ID D02" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Pilih Item Pekerjaan</label>
+                            <select id="reportItem" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <!-- Dynamic items -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Volume Dikerjakan Hari Ini</label>
+                            <input type="number" id="reportVolume" min="1" required placeholder="Contoh: 1" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <!-- Manpower Log -->
+                        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Jumlah Teknisi</label>
+                                <input type="number" id="reportTechnician" min="0" value="2" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Jumlah Helper</label>
+                                <input type="number" id="reportHelper" min="0" value="2" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Bukti Foto Dokumentasi</label>
+                            <input type="file" id="reportPhoto" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Catatan Lapangan</label>
+                            <textarea id="reportNotes" rows="2" placeholder="Contoh: Pekerjaan berjalan lancar..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg transition shadow-sm flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>Simpan Laporan Harian</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Riwayat Laporan List -->
+                <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 flex flex-col">
+                    <h3 class="font-bold text-slate-900 text-base mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
+                        <span class="flex items-center space-x-2"><i class="fa-solid fa-clock-rotate-left text-emerald-600"></i><span>Riwayat Laporan Lapangan</span></span>
+                        <span id="report-count-badge" class="text-xs bg-slate-100 px-2.5 py-1 rounded-full text-slate-600 font-semibold">0 Laporan</span>
+                    </h3>
+                    <div class="flex-1 overflow-y-auto max-h-[600px] space-y-3 pr-1" id="report-history-container">
+                        <!-- Dynamic History -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: DAFTAR ITEM PEKERJAAN -->
+        <div id="content-items" class="space-y-6 tab-content hidden">
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5 pb-4 border-b border-slate-100">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Rincian Item Pekerjaan & Remaining Work</h3>
+                        <p class="text-xs text-slate-500">Target rencana vs realisasi pemasangan di lapangan</p>
+                    </div>
+                    <button onclick="openAddItemModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Tambah Item Pekerjaan</span>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                                <th class="py-3 px-4 font-semibold">Nama Item Pekerjaan</th>
+                                <th class="py-3 px-4 font-semibold text-center">Target (Rencana)</th>
+                                <th class="py-3 px-4 font-semibold text-center">Terpasang (Actual)</th>
+                                <th class="py-3 px-4 font-semibold text-center">Sisa (Remaining)</th>
+                                <th class="py-3 px-4 font-semibold text-center">Satuan</th>
+                                <th class="py-3 px-4 font-semibold text-center">Status</th>
+                                <th class="py-3 px-4 font-semibold text-right no-print">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-table-body" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Dynamic items -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: LOG KENDALA LAPANGAN -->
+        <div id="content-issues" class="space-y-6 tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Kendala -->
+                <div class="lg:col-span-1 bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-900 text-base mb-4 pb-2 border-b border-slate-100 flex items-center space-x-2">
+                        <i class="fa-solid fa-triangle-exclamation text-emerald-600"></i>
+                        <span>Catat Blocker / Kendala</span>
+                    </h3>
+                    <form id="issueForm" onsubmit="handleIssueSubmit(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Tanggal Kendala</label>
+                            <input type="date" id="issueDate" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Lokasi / Zona</label>
+                            <input type="text" id="issueLocation" required placeholder="Contoh: Server Room Lt. 4" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Deskripsi Kendala</label>
+                            <textarea id="issueDesc" rows="3" required placeholder="Contoh: Kendala akses ruangan..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Status Penanganan</label>
+                            <select id="issueStatus" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="Open">Open (Belum Selesai)</option>
+                                <option value="Resolved">Resolved (Sudah Ditangani)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Catatan Solusi</label>
+                            <input type="text" id="issueSolution" placeholder="Contoh: Sudah dikoordinasikan..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg transition shadow-sm flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Simpan Kendala Lapangan</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Table Kendala -->
+                <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-900 text-base mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
+                        <span>Daftar Kendala & Blocker Lapangan</span>
+                        <span id="issue-count-badge" class="text-xs bg-slate-100 px-2.5 py-1 rounded-full text-slate-600 font-semibold">0 Kendala</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-3 font-semibold">Tanggal & Lokasi</th>
+                                    <th class="py-3 px-3 font-semibold">Deskripsi Kendala</th>
+                                    <th class="py-3 px-3 font-semibold">Status</th>
+                                    <th class="py-3 px-3 font-semibold">Solusi</th>
+                                    <th class="py-3 px-3 font-semibold text-right no-print">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="issues-table-body" class="divide-y divide-slate-100 text-slate-700">
+                                <!-- Dynamic issues -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PRINT / PDF CONTAINER (Clean Formal Layout) -->
+    <div id="pdf-export-container" class="print-only p-8 bg-white text-slate-900">
+        <div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-center">
+            <div>
+                <h1 id="print-title-header" class="text-2xl font-bold">SITE MANAGEMENT & DAILY PROGRESS SYSTEM</h1>
+                <p id="print-subtitle-location" class="text-sm text-slate-600">Main Data Center Site A</p>
+            </div>
+            <div class="text-right text-xs">
+                <p><strong>Tanggal Cetak:</strong> <span id="print-date"></span></p>
+                <p><strong>Site Manager:</strong> <span id="print-manager-name">Ir. Budi Santoso</span></p>
+            </div>
+        </div>
+        <div class="mb-6">
+            <h3 class="font-bold text-base mb-2 bg-emerald-50 text-emerald-900 p-2 border border-emerald-200">1. Ringkasan Eksekutif & KPI</h3>
+            <div class="grid grid-cols-4 gap-4 text-sm border p-4 rounded bg-slate-50">
+                <div>Total Target: <span id="print-target" class="font-bold"></span></div>
+                <div>Total Terpasang: <span id="print-installed" class="font-bold text-emerald-700"></span></div>
+                <div>Sisa Pengerjaan: <span id="print-remaining" class="font-bold text-yellow-700"></span></div>
+                <div>Progress Total: <span id="print-progress" class="font-bold"></span></div>
+            </div>
+        </div>
+        <div class="mb-6">
+            <h3 class="font-bold text-base mb-2 bg-emerald-50 text-emerald-900 p-2 border border-emerald-200">2. Rekapitulasi Item Pekerjaan</h3>
+            <table class="w-full text-xs border-collapse border border-slate-300">
+                <thead>
+                    <tr class="bg-slate-100">
+                        <th class="border p-1.5 text-left">Item Pekerjaan</th>
+                        <th class="border p-1.5 text-center">Target</th>
+                        <th class="border p-1.5 text-center">Terpasang</th>
+                        <th class="border p-1.5 text-center">Sisa</th>
+                        <th class="border p-1.5 text-center">Satuan</th>
+                        <th class="border p-1.5 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="print-items-body"></tbody>
+            </table>
+        </div>
+        <div class="mb-6">
+            <h3 class="font-bold text-base mb-2 bg-emerald-50 text-emerald-900 p-2 border border-emerald-200">3. Laporan Harian Terakhir</h3>
+            <table class="w-full text-xs border-collapse border border-slate-300">
+                <thead>
+                    <tr class="bg-slate-100">
+                        <th class="border p-1.5 text-left">Tanggal</th>
+                        <th class="border p-1.5 text-left">Zona</th>
+                        <th class="border p-1.5 text-left">ID Layout</th>
+                        <th class="border p-1.5 text-left">Pekerjaan</th>
+                        <th class="border p-1.5 text-center">Volume</th>
+                        <th class="border p-1.5 text-center">Tenaga Kerja</th>
+                        <th class="border p-1.5 text-left">Catatan</th>
+                    </tr>
+                </thead>
+                <tbody id="print-reports-body"></tbody>
+            </table>
+        </div>
+        <div class="mt-12 flex justify-between text-xs pt-12">
+            <div class="text-center">
+                <p>Disusun Oleh,</p>
+                <div class="h-16"></div>
+                <p class="font-bold border-t border-slate-400 pt-1">Lead Supervisor Lapangan</p>
+            </div>
+            <div class="text-center">
+                <p>Mengetahui,</p>
+                <div class="h-16"></div>
+                <p id="print-signature-manager" class="font-bold border-t border-slate-400 pt-1">Ir. Budi Santoso (Site Manager)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT SITE & MANAGER INFO -->
+    <div id="editProjectModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="font-bold text-slate-900 text-base">Ubah Nama Site & Site Manager</h3>
+                <button onclick="closeEditProjectModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleEditProjectSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nama / Judul Proyek</label>
+                    <input type="text" id="editProjectNameInput" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nama Site</label>
+                    <input type="text" id="editSiteLocationInput" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nama Site Manager</label>
+                    <input type="text" id="editSiteManagerInput" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeEditProjectModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition shadow-sm">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL KELOLA ZONA / AREA (Dapat Ditambah atau Dihapus) -->
+    <div id="manageZonesModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="font-bold text-slate-900 text-base">Kelola Daftar Zona / Area Lokasi</h3>
+                <button onclick="closeManageZonesModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-xs text-slate-500">Anda dapat menambah atau menghapus zona/area sesuai kebutuhan site Anda.</p>
+                <div class="flex space-x-2">
+                    <input type="text" id="newZoneNameInput" placeholder="Tambah zona baru..." class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button type="button" onclick="addZoneItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition">Tambah</button>
+                </div>
+                <div class="max-h-60 overflow-y-auto space-y-2 border border-slate-100 p-2 rounded-lg" id="zonesListContainer">
+                    <!-- Dynamic zones list with delete buttons -->
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button type="button" onclick="closeManageZonesModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition shadow-sm">Selesai</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL WHATSAPP SUMMARY -->
+    <div id="whatsappModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
+                    <i class="fa-brands fa-whatsapp text-emerald-600 text-xl"></i>
+                    <span>Ringkasan Laporan WhatsApp</span>
+                </h3>
+                <button onclick="closeWhatsAppModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">Format laporan siap salin untuk dibagikan ke Grup Manajemen Proyek:</p>
+            <textarea id="whatsappTextOutput" rows="10" readonly class="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-xs font-mono text-slate-800 focus:outline-none mb-4 select-all"></textarea>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeWhatsAppModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition">Tutup</button>
+                <button onclick="copyWhatsAppText()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>Salin ke Clipboard</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH ITEM PEKERJAAN -->
+    <div id="addItemModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="font-bold text-slate-900 text-base">Tambah Item Pekerjaan Baru</h3>
+                <button onclick="closeAddItemModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleAddItemSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nama Item Pekerjaan</label>
+                    <input type="text" id="newItemName" required placeholder="Contoh: Instalasi Titik Kamera" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Total Rencana</label>
+                    <input type="number" id="newItemTarget" min="1" required placeholder="Contoh: 50" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Satuan</label>
+                    <input type="text" id="newItemUnit" required placeholder="Contoh: titik / unit / meter" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeAddItemModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition shadow-sm">Simpan Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP NOTIFIKASI CUSTOM -->
+    <div id="notificationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center">
+            <div id="modalIcon" class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <h3 id="modalTitle" class="font-bold text-slate-900 text-lg mb-1">Informasi</h3>
+            <p id="modalMessage" class="text-xs text-slate-600 mb-5">Pesan informasi sistem.</p>
+            <button onclick="closeNotificationModal()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm transition shadow-sm">Mengerti</button>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI RESET -->
+    <div id="resetConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="font-bold text-slate-900 text-lg mb-1">Reset Semua Data?</h3>
+            <p class="text-xs text-slate-600 mb-5">Tindakan ini akan menghapus seluruh data laporan, kendala, dan riwayat di browser Anda. Data tidak dapat dikembalikan kecuali Anda sudah membuat backup JSON.</p>
+            <div class="flex space-x-3">
+                <button onclick="closeResetModal()" class="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm transition">Batal</button>
+                <button onclick="executeResetData()" class="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-sm transition shadow-sm">Ya, Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN JAVASCRIPT -->
+    <script>
+        // Default Initial Data
+        const defaultItems = [
+            { id: 'item_1', name: 'Instalasi Kamera Dome & Bullet', target: 65, unit: 'titik' },
+            { id: 'item_2', name: 'Pemasangan Bracket & Pole', target: 65, unit: 'set' },
+            { id: 'item_3', name: 'Pemasangan Pipa Konduit', target: 1200, unit: 'meter' },
+            { id: 'item_4', name: 'Tarikan Kabel UTP & Power', target: 1500, unit: 'meter' },
+            { id: 'item_5', name: 'Termination RJ45 & Patch Panel', target: 5, unit: 'unit' }
+        ];
+
+        const defaultZones = [
+            "IDF Room Lantai 3",
+            "Server Room Lantai 4",
+            "NOC Room Lantai 5",
+            "Main Entrance & Lobby",
+            "Zona Koridor & Perimeter"
+        ];
+
+        // State Management
+        let appData = {
+            projectName: localStorage.getItem('cctv_project_name') || 'Proyek Instalasi & Integrasi Data Center',
+            siteLocation: localStorage.getItem('cctv_site_location') || 'Main Data Center Site A',
+            siteManager: localStorage.getItem('cctv_site_manager') || 'Ir. Budi Santoso',
+            projectStatus: localStorage.getItem('cctv_project_status') || 'On Progress',
+            zones: JSON.parse(localStorage.getItem('cctv_zones')) || defaultZones,
+            items: JSON.parse(localStorage.getItem('cctv_items')) || defaultItems,
+            reports: JSON.parse(localStorage.getItem('cctv_reports')) || [],
+            issues: JSON.parse(localStorage.getItem('cctv_issues')) || []
+        };
+
+        // Initialize App on Load
+        window.onload = function() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const reportDateEl = document.getElementById('reportDate');
+            const issueDateEl = document.getElementById('issueDate');
+            const printDateEl = document.getElementById('print-date');
+            
+            if (reportDateEl) reportDateEl.value = todayStr;
+            if (issueDateEl) issueDateEl.value = todayStr;
+            if (printDateEl) printDateEl.innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Set header info fields
+            const projNameEl = document.getElementById('display-project-name');
+            const siteLocEl = document.getElementById('display-site-location');
+            const siteMgrEl = document.getElementById('display-site-manager');
+            const statusSel = document.getElementById('projectStatusSelect');
+
+            if (projNameEl) projNameEl.innerText = appData.projectName;
+            if (siteLocEl) siteLocEl.innerText = appData.siteLocation;
+            if (siteMgrEl) siteMgrEl.innerText = appData.siteManager;
+            if (statusSel) statusSel.value = appData.projectStatus;
+
+            renderAll();
+        };
+
+        // Tab Navigation Function
+        function switchTab(tabName) {
+            const tabs = ['dashboard', 'input', 'items', 'issues'];
+            tabs.forEach(t => {
+                const contentEl = document.getElementById('content-' + t);
+                const btnEl = document.getElementById('tab-' + t);
+                if (contentEl && btnEl) {
+                    if (t === tabName) {
+                        contentEl.classList.remove('hidden');
+                        btnEl.className = "flex-1 py-2.5 px-4 rounded-lg transition flex items-center justify-center space-x-2 whitespace-nowrap bg-emerald-600 text-white shadow-sm font-semibold";
+                    } else {
+                        contentEl.classList.add('hidden');
+                        btnEl.className = "flex-1 py-2.5 px-4 rounded-lg transition flex items-center justify-center space-x-2 whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white";
+                    }
+                }
+            });
+        }
+
+        // Helper function to calculate total installed volume per item from daily reports
+        function getInstalledVolume(itemId) {
+            let total = 0;
+            appData.reports.forEach(rep => {
+                if (rep.itemId === itemId) {
+                    total += Number(rep.volume || 0);
+                }
+            });
+            return total;
+        }
+
+        function saveData() {
+            localStorage.setItem('cctv_project_name', appData.projectName);
+            localStorage.setItem('cctv_site_location', appData.siteLocation);
+            localStorage.setItem('cctv_site_manager', appData.siteManager);
+            localStorage.setItem('cctv_project_status', appData.projectStatus);
+            localStorage.setItem('cctv_zones', JSON.stringify(appData.zones));
+            localStorage.setItem('cctv_items', JSON.stringify(appData.items));
+            localStorage.setItem('cctv_reports', JSON.stringify(appData.reports));
+            localStorage.setItem('cctv_issues', JSON.stringify(appData.issues));
+            renderAll();
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderZoneSelectOptions();
+            renderItemSelectOptions();
+            renderItemsTable();
+            renderReportsHistory();
+            renderIssuesTable();
+            preparePrintLayout();
+        }
+
+        // RENDER DASHBOARD (Featuring Progress Bars per Item)
+        function renderDashboard() {
+            let totalTarget = 0;
+            let totalInstalled = 0;
+
+            appData.items.forEach(item => {
+                totalTarget += Number(item.target);
+                totalInstalled += getInstalledVolume(item.id);
+            });
+
+            const totalRemaining = Math.max(0, totalTarget - totalInstalled);
+            const overallPct = totalTarget > 0 ? ((totalInstalled / totalTarget) * 100).toFixed(1) : 0;
+
+            let todayManpower = 0;
+            const todayStr = new Date().toISOString().split('T')[0];
+            appData.reports.forEach(rep => {
+                if (rep.date === todayStr) {
+                    todayManpower += Number(rep.technician || 0) + Number(rep.helper || 0);
+                }
+            });
+            if (todayManpower === 0 && appData.reports.length > 0) {
+                const latest = appData.reports[0];
+                todayManpower = Number(latest.technician || 0) + Number(latest.helper || 0);
+            }
+
+            const openIssuesCount = appData.issues.filter(i => i.status === 'Open').length;
+
+            const elTarget = document.getElementById('kpi-total-target');
+            const elInstalled = document.getElementById('kpi-total-installed');
+            const elRemaining = document.getElementById('kpi-total-remaining');
+            const elManpower = document.getElementById('kpi-total-manpower');
+            const elIssues = document.getElementById('kpi-total-issues');
+            const elPctText = document.getElementById('overall-percentage-text');
+            const elProgressBar = document.getElementById('overall-progress-bar');
+
+            if (elTarget) elTarget.innerText = totalTarget.toLocaleString();
+            if (elInstalled) elInstalled.innerText = totalInstalled.toLocaleString();
+            if (elRemaining) elRemaining.innerText = totalRemaining.toLocaleString();
+            if (elManpower) elManpower.innerText = todayManpower + ' Org';
+            if (elIssues) elIssues.innerText = openIssuesCount;
+            if (elPctText) elPctText.innerText = overallPct + '%';
+            if (elProgressBar) elProgressBar.style.width = Math.min(100, overallPct) + '%';
+
+            // Render Item Progress Bars
+            const container = document.getElementById('item-progress-bars-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (appData.items.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">Belum ada item pekerjaan.</div>`;
+                return;
+            }
+
+            appData.items.forEach(item => {
+                const installed = getInstalledVolume(item.id);
+                const pct = item.target > 0 ? Math.min(100, ((installed / item.target) * 100)).toFixed(1) : 0;
+                const isComplete = installed >= item.target;
+
+                const row = document.createElement('div');
+                row.className = "bg-slate-50 border border-slate-200 rounded-xl p-4";
+                row.innerHTML = `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-1">
+                        <div>
+                            <span class="font-bold text-slate-900 text-sm">${item.name}</span>
+                            <span class="text-xs text-slate-500 ml-2">Target: ${item.target} ${item.unit}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-emerald-600">Terpasang: ${installed} ${item.unit}</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full ${isComplete ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'}">${pct}%</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                        <div class="bg-emerald-500 h-2.5 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // RENDER ZONE SELECT OPTIONS & LIST
+        function renderZoneSelectOptions() {
+            const select = document.getElementById('reportZone');
+            if (select) {
+                select.innerHTML = '';
+                appData.zones.forEach(zone => {
+                    const opt = document.createElement('option');
+                    opt.value = zone;
+                    opt.textContent = zone;
+                    select.appendChild(opt);
+                });
+            }
+
+            const zonesListContainer = document.getElementById('zonesListContainer');
+            if (zonesListContainer) {
+                zonesListContainer.innerHTML = '';
+                appData.zones.forEach((zone, idx) => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs";
+                    row.innerHTML = `
+                        <span class="font-medium text-slate-800">${zone}</span>
+                        <button type="button" onclick="deleteZoneItem(${idx})" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash-can"></i></button>
+                    `;
+                    zonesListContainer.appendChild(row);
+                });
+            }
+        }
+
+        function openManageZonesModal() {
+            renderZoneSelectOptions();
+            const modal = document.getElementById('manageZonesModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+        function closeManageZonesModal() {
+            const modal = document.getElementById('manageZonesModal');
+            if (modal) modal.classList.add('hidden');
+        }
+        function addZoneItem() {
+            const input = document.getElementById('newZoneNameInput');
+            if (!input) return;
+            const val = input.value.trim();
+            if (val && !appData.zones.includes(val)) {
+                appData.zones.push(val);
+                input.value = '';
+                saveData();
+            } else if (!val) {
+                showNotification('Peringatan', 'Nama zona tidak boleh kosong.');
+            } else {
+                showNotification('Peringatan', 'Zona tersebut sudah ada.');
+            }
+        }
+        function deleteZoneItem(index) {
+            if (appData.zones.length <= 1) {
+                showNotification('Peringatan', 'Minimal harus ada 1 zona/area.');
+                return;
+            }
+            appData.zones.splice(index, 1);
+            saveData();
+        }
+
+        // RENDER ITEM SELECT OPTIONS
+        function renderItemSelectOptions() {
+            const select = document.getElementById('reportItem');
+            if (!select) return;
+            select.innerHTML = '';
+            appData.items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = `${item.name} (Target: ${item.target} ${item.unit})`;
+                select.appendChild(opt);
+            });
+        }
+
+        // RENDER ITEMS TABLE
+        function renderItemsTable() {
+            const tbody = document.getElementById('items-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            appData.items.forEach(item => {
+                const installed = getInstalledVolume(item.id);
+                const remaining = Math.max(0, item.target - installed);
+                const isComplete = installed >= item.target;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-900">${item.name}</td>
+                    <td class="py-3 px-4 text-center">${item.target}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${installed}</td>
+                    <td class="py-3 px-4 text-center font-bold text-yellow-600">${remaining}</td>
+                    <td class="py-3 px-4 text-center text-slate-500">${item.unit}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${isComplete ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${isComplete ? 'Selesai' : 'On Progress'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right no-print">
+                        <button type="button" onclick="deleteItem('${item.id}')" class="text-slate-400 hover:text-red-600 transition p-1" title="Hapus Item"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // HANDLE DAILY REPORT SUBMIT
+        function handleDailyReportSubmit(e) {
+            e.preventDefault();
+            const date = document.getElementById('reportDate').value;
+            const zone = document.getElementById('reportZone').value;
+            const layoutId = document.getElementById('reportLayoutId').value.trim();
+            const itemId = document.getElementById('reportItem').value;
+            const volume = document.getElementById('reportVolume').value;
+            const technician = document.getElementById('reportTechnician').value;
+            const helper = document.getElementById('reportHelper').value;
+            const notes = document.getElementById('reportNotes').value;
+            const photoInput = document.getElementById('reportPhoto');
+
+            const itemObj = appData.items.find(i => i.id === itemId);
+            const itemName = itemObj ? itemObj.name : 'Item Pekerjaan';
+
+            if (photoInput && photoInput.files && photoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(uploadEvent) {
+                    saveReportEntry({
+                        id: 'rep_' + Date.now(),
+                        date, zone, layoutId, itemId, itemName, volume, technician, helper, notes,
+                        photo: uploadEvent.target.result
+                    });
+                };
+                reader.readAsDataURL(photoInput.files[0]);
+            } else {
+                saveReportEntry({
+                    id: 'rep_' + Date.now(),
+                    date, zone, layoutId, itemId, itemName, volume, technician, helper, notes,
+                    photo: null
+                });
+            }
+        }
+
+        function saveReportEntry(reportObj) {
+            appData.reports.unshift(reportObj);
+            saveData();
+            const form = document.getElementById('dailyReportForm');
+            if (form) form.reset();
+            const dateEl = document.getElementById('reportDate');
+            if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+            showNotification('Berhasil', 'Laporan harian berhasil disimpan dengan ID Layout!');
+        }
+
+        // RENDER REPORTS HISTORY
+        function renderReportsHistory() {
+            const container = document.getElementById('report-history-container');
+            const countBadge = document.getElementById('report-count-badge');
+            if (!container) return;
+
+            container.innerHTML = '';
+            if (countBadge) countBadge.innerText = appData.reports.length + ' Laporan';
+
+            if (appData.reports.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Belum ada laporan harian tercatat.</div>`;
+                return;
+            }
+
+            appData.reports.forEach(rep => {
+                const layoutBadge = rep.layoutId ? `<span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-0.5 rounded ml-2">ID: ${rep.layoutId}</span>` : '';
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4";
+                div.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        ${rep.photo ? `<img src="${rep.photo}" class="w-16 h-16 object-cover rounded-lg border border-slate-300 flex-shrink-0 cursor-pointer" onclick="window.open('${rep.photo}')" title="Klik untuk memperbesar">` : `<div class="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center text-slate-400 text-xs flex-shrink-0">No Foto</div>`}
+                        <div>
+                            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                                <span class="text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">${rep.date}</span>
+                                <span class="text-xs font-semibold text-slate-600"><i class="fa-solid fa-location-dot text-emerald-600 mr-1"></i>${rep.zone}</span>
+                                ${layoutBadge}
+                            </div>
+                            <h4 class="font-bold text-slate-900 text-sm mt-1">${rep.itemName} : <span class="text-emerald-600">+${rep.volume} terpasang</span></h4>
+                            <p class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-users text-slate-400 mr-1"></i>Teknisi: ${rep.technician} | Helper: ${rep.helper} | <i class="fa-solid fa-note-sticky ml-1 text-slate-400"></i> ${rep.notes || '-'}</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="deleteReport('${rep.id}')" class="text-slate-400 hover:text-red-600 p-2 transition" title="Hapus Laporan"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function deleteReport(id) {
+            appData.reports = appData.reports.filter(r => r.id !== id);
+            saveData();
+            showNotification('Dihapus', 'Laporan harian berhasil dihapus.');
+        }
+
+        // HANDLE ISSUE SUBMIT
+        function handleIssueSubmit(e) {
+            e.preventDefault();
+            const date = document.getElementById('issueDate').value;
+            const location = document.getElementById('issueLocation').value;
+            const desc = document.getElementById('issueDesc').value;
+            const status = document.getElementById('issueStatus').value;
+            const solution = document.getElementById('issueSolution').value;
+
+            appData.issues.unshift({
+                id: 'issue_' + Date.now(),
+                date, location, desc, status, solution
+            });
+
+            saveData();
+            const form = document.getElementById('issueForm');
+            if (form) form.reset();
+            const issueDateEl = document.getElementById('issueDate');
+            if (issueDateEl) issueDateEl.value = new Date().toISOString().split('T')[0];
+            showNotification('Berhasil', 'Kendala lapangan berhasil dicatat.');
+        }
+
+        function renderIssuesTable() {
+            const tbody = document.getElementById('issues-table-body');
+            const countBadge = document.getElementById('issue-count-badge');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            if (countBadge) countBadge.innerText = appData.issues.length + ' Kendala';
+
+            if (appData.issues.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400 text-sm">Belum ada kendala lapangan tercatat.</td></tr>`;
+                return;
+            }
+
+            appData.issues.forEach(iss => {
+                const isOpen = iss.status === 'Open';
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-3 text-xs">
+                        <strong class="text-slate-900">${iss.date}</strong><br>
+                        <span class="text-slate-500">${iss.location}</span>
+                    </td>
+                    <td class="py-3 px-3 text-slate-800 text-xs">${iss.desc}</td>
+                    <td class="py-3 px-3 text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${isOpen ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}">
+                            ${iss.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-3 text-slate-600 text-xs">${iss.solution || '-'}</td>
+                    <td class="py-3 px-3 text-right no-print">
+                        <button type="button" onclick="deleteIssue('${iss.id}')" class="text-slate-400 hover:text-red-600 p-1 transition" title="Hapus Kendala"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteIssue(id) {
+            appData.issues = appData.issues.filter(i => i.id !== id);
+            saveData();
+        }
+
+        // EDIT PROJECT INFO MODAL
+        function openEditProjectModal() {
+            const nameIn = document.getElementById('editProjectNameInput');
+            const locIn = document.getElementById('editSiteLocationInput');
+            const mgrIn = document.getElementById('editSiteManagerInput');
+            const modal = document.getElementById('editProjectModal');
+
+            if (nameIn) nameIn.value = appData.projectName;
+            if (locIn) locIn.value = appData.siteLocation;
+            if (mgrIn) mgrIn.value = appData.siteManager;
+            if (modal) modal.classList.remove('hidden');
+        }
+        function closeEditProjectModal() {
+            const modal = document.getElementById('editProjectModal');
+            if (modal) modal.classList.add('hidden');
+        }
+        function handleEditProjectSubmit(e) {
+            e.preventDefault();
+            const nameIn = document.getElementById('editProjectNameInput');
+            const locIn = document.getElementById('editSiteLocationInput');
+            const mgrIn = document.getElementById('editSiteManagerInput');
+
+            if (nameIn) appData.projectName = nameIn.value;
+            if (locIn) appData.siteLocation = locIn.value;
+            if (mgrIn) appData.siteManager = mgrIn.value;
+
+            saveData();
+            closeEditProjectModal();
+
+            const pName = document.getElementById('display-project-name');
+            const sLoc = document.getElementById('display-site-location');
+            const sMgr = document.getElementById('display-site-manager');
+
+            if (pName) pName.innerText = appData.projectName;
+            if (sLoc) sLoc.innerText = appData.siteLocation;
+            if (sMgr) sMgr.innerText = appData.siteManager;
+
+            showNotification('Berhasil', 'Nama site dan site manager berhasil diperbarui.');
+        }
+
+        function updateProjectStatus(statusVal) {
+            appData.projectStatus = statusVal;
+            saveData();
+        }
+
+        // ADD ITEM MODAL CONTROLS
+        function openAddItemModal() {
+            const modal = document.getElementById('addItemModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+        function closeAddItemModal() {
+            const modal = document.getElementById('addItemModal');
+            if (modal) modal.classList.add('hidden');
+        }
+        function handleAddItemSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('newItemName').value;
+            const target = Number(document.getElementById('newItemTarget').value);
+            const unit = document.getElementById('newItemUnit').value;
+
+            appData.items.push({ id: 'item_' + Date.now(), name, target, unit });
+            saveData();
+            closeAddItemModal();
+
+            const nName = document.getElementById('newItemName');
+            const nTarget = document.getElementById('newItemTarget');
+            const nUnit = document.getElementById('newItemUnit');
+            if (nName) nName.value = '';
+            if (nTarget) nTarget.value = '';
+            if (nUnit) nUnit.value = '';
+
+            showNotification('Sukses', 'Item pekerjaan baru berhasil ditambahkan.');
+        }
+        function deleteItem(id) {
+            appData.items = appData.items.filter(i => i.id !== id);
+            saveData();
+        }
+
+        // WHATSAPP SUMMARY GENERATOR
+        function openWhatsAppModal() {
+            let totalTarget = 0;
+            let totalInstalled = 0;
+            appData.items.forEach(i => {
+                totalTarget += Number(i.target);
+                totalInstalled += getInstalledVolume(i.id);
+            });
+            const pct = totalTarget > 0 ? ((totalInstalled / totalTarget) * 100).toFixed(1) : 0;
+            const openIssues = appData.issues.filter(i => i.status === 'Open').length;
+
+            let text = `📊 *SITE MANAGEMENT & DAILY PROGRESS*\n`;
+            text += `🏢 Proyek: ${appData.projectName}\n`;
+            text += `📍 Site: ${appData.siteLocation}\n`;
+            text += `👤 Site Manager: ${appData.siteManager}\n`;
+            text += `📅 Tanggal: ${new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})}\n`;
+            text += `📌 Status: ${appData.projectStatus}\n\n`;
+            text += `📈 *RINGKASAN PROGRESS:*\n`;
+            text += `• Total Target: ${totalTarget.toLocaleString()}\n`;
+            text += `• Total Terpasang: ${totalInstalled.toLocaleString()} (${pct}%)\n`;
+            text += `• Sisa Target: ${Math.max(0, totalTarget - totalInstalled).toLocaleString()}\n\n`;
+
+            text += `🛠️ *RINCIAN ITEM PEKERJAAN:*\n`;
+            appData.items.forEach(item => {
+                const inst = getInstalledVolume(item.id);
+                const p = item.target > 0 ? ((inst / item.target)*100).toFixed(0) : 0;
+                text += `• ${item.name}: ${inst}/${item.target} ${item.unit} (${p}%)\n`;
+            });
+
+            text += `\n📋 *LAPORAN TERAKHIR & ID LAYOUT:*\n`;
+            appData.reports.slice(0, 3).forEach(r => {
+                text += `• [${r.date}] ${r.zone} (${r.layoutId || '-'}): ${r.itemName} (+${r.volume})\n`;
+            });
+
+            text += `\n⚠️ *KENDALA LAPANGAN (${openIssues} Open):*\n`;
+            if(appData.issues.length === 0) {
+                text += `• Nihil / Aman\n`;
+            } else {
+                appData.issues.filter(i => i.status === 'Open').slice(0,3).forEach(iss => {
+                    text += `• [${iss.location}] ${iss.desc}\n`;
+                });
+            }
+
+            text += `\n_Dilaporkan via Site Management & Daily Progress System_`;
+
+            const ta = document.getElementById('whatsappTextOutput');
+            const modal = document.getElementById('whatsappModal');
+            if (ta) ta.value = text;
+            if (modal) modal.classList.remove('hidden');
+        }
+        function closeWhatsAppModal() {
+            const modal = document.getElementById('whatsappModal');
+            if (modal) modal.classList.add('hidden');
+        }
+        function copyWhatsAppText() {
+            const textarea = document.getElementById('whatsappTextOutput');
+            if (!textarea) return;
+            textarea.select();
+            document.execCommand('copy');
+            showNotification('Berhasil Disalin', 'Teks ringkasan WhatsApp berhasil disalin ke clipboard!');
+            closeWhatsAppModal();
+        }
+
+        // PREPARE PRINT & EXPORT PDF LAYOUT
+        function preparePrintLayout() {
+            const pTitle = document.getElementById('print-title-header');
+            const pSub = document.getElementById('print-subtitle-location');
+            const pMgr = document.getElementById('print-manager-name');
+            const pSig = document.getElementById('print-signature-manager');
+
+            if (pTitle) pTitle.innerText = `SITE MANAGEMENT & DAILY PROGRESS`;
+            if (pSub) pSub.innerText = `Site: ${appData.siteLocation} | Status: ${appData.projectStatus}`;
+            if (pMgr) pMgr.innerText = appData.siteManager;
+            if (pSig) pSig.innerText = `${appData.siteManager} (Site Manager)`;
+
+            let totalTarget = 0, totalInstalled = 0;
+            appData.items.forEach(i => {
+                totalTarget += Number(i.target);
+                totalInstalled += getInstalledVolume(i.id);
+            });
+            const elT = document.getElementById('print-target');
+            const elI = document.getElementById('print-installed');
+            const elR = document.getElementById('print-remaining');
+            const elP = document.getElementById('print-progress');
+
+            if (elT) elT.innerText = totalTarget;
+            if (elI) elI.innerText = totalInstalled;
+            if (elR) elR.innerText = Math.max(0, totalTarget - totalInstalled);
+            if (elP) elP.innerText = (totalTarget > 0 ? ((totalInstalled/totalTarget)*100).toFixed(1) : 0) + '%';
+
+            // Items body
+            const itemsBody = document.getElementById('print-items-body');
+            if (itemsBody) {
+                itemsBody.innerHTML = '';
+                appData.items.forEach(i => {
+                    const inst = getInstalledVolume(i.id);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="border p-1.5">${i.name}</td>
+                        <td class="border p-1.5 text-center">${i.target}</td>
+                        <td class="border p-1.5 text-center font-bold">${inst}</td>
+                        <td class="border p-1.5 text-center">${Math.max(0, i.target - inst)}</td>
+                        <td class="border p-1.5 text-center">${i.unit}</td>
+                        <td class="border p-1.5 text-center">${inst >= i.target ? 'Selesai' : 'On Progress'}</td>
+                    `;
+                    itemsBody.appendChild(tr);
+                });
+            }
+
+            // Reports body
+            const reportsBody = document.getElementById('print-reports-body');
+            if (reportsBody) {
+                reportsBody.innerHTML = '';
+                appData.reports.slice(0, 10).forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="border p-1.5">${r.date}</td>
+                        <td class="border p-1.5">${r.zone}</td>
+                        <td class="border p-1.5 font-bold">${r.layoutId || '-'}</td>
+                        <td class="border p-1.5">${r.itemName}</td>
+                        <td class="border p-1.5 text-center font-bold">+${r.volume}</td>
+                        <td class="border p-1.5 text-center">Teknisi: ${r.technician}, Helper: ${r.helper}</td>
+                        <td class="border p-1.5">${r.notes || '-'}</td>
+                    `;
+                    reportsBody.appendChild(tr);
+                });
+            }
+        }
+
+        // DIRECT EXPORT TO PDF FUNCTION
+        function exportToPDF() {
+            preparePrintLayout();
+            const element = document.getElementById('pdf-export-container');
+            if (!element) {
+                showNotification('Error', 'Elemen cetak tidak ditemukan.');
+                return;
+            }
+            const opt = {
+                margin:       10,
+                filename:     `Laporan_Progress_${appData.siteLocation.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            showNotification('Memproses', 'Sedang merender dan mengunduh file PDF...');
+            html2pdf().from(element).set(opt).save().then(() => {
+                showNotification('Berhasil', 'File PDF laporan resmi berhasil diunduh.');
+            }).catch(err => {
+                console.error(err);
+                showNotification('Gagal', 'Terjadi kesalahan saat mencetak PDF.');
+            });
+        }
+
+        // DATA BACKUP (JSON) & RESTORE & RESET
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Backup_Data_CCTV_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showNotification('Berhasil', 'Backup data .json berhasil diunduh.');
+        }
+
+        function importJSON(event) {
+            const fileReader = new FileReader();
+            if (event.target.files && event.target.files[0]) {
+                fileReader.readAsText(event.target.files[0], "UTF-8");
+                fileReader.onload = function(e) {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        if (parsed && parsed.items && parsed.reports) {
+                            appData = parsed;
+                            saveData();
+                            showNotification('Berhasil', 'Data berhasil dipulihkan (restore) ke sistem.');
+                        } else {
+                            showNotification('Format Salah', 'File JSON tidak sesuai dengan skema aplikasi.');
+                        }
+                    } catch (err) {
+                        showNotification('Error', 'Gagal membaca file JSON.');
+                    }
+                };
+            }
+        }
+
+        function resetDataModal() {
+            const modal = document.getElementById('resetConfirmModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+        function closeResetModal() {
+            const modal = document.getElementById('resetConfirmModal');
+            if (modal) modal.classList.add('hidden');
+        }
+        function executeResetData() {
+            localStorage.clear();
+            appData = {
+                projectName: 'Proyek Instalasi & Integrasi Data Center',
+                siteLocation: 'Main Data Center Site A',
+                siteManager: 'Ir. Budi Santoso',
+                projectStatus: 'On Progress',
+                zones: defaultZones,
+                items: defaultItems,
+                reports: [],
+                issues: []
+            };
+            saveData();
+            closeResetModal();
+            showNotification('Reset Berhasil', 'Seluruh data telah dikembalikan ke pengaturan awal.');
+        }
+
+        // NOTIFICATION MODAL HELPER
+        function showNotification(title, message) {
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+            const modal = document.getElementById('notificationModal');
+
+            if (titleEl) titleEl.innerText = title;
+            if (msgEl) msgEl.innerText = message;
+            if (modal) modal.classList.remove('hidden');
+        }
+        function closeNotificationModal() {
+            const modal = document.getElementById('notificationModal');
+            if (modal) modal.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
